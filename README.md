@@ -1,5 +1,17 @@
+### Instructions
 
-Solution Design:
+Before starting, please ensure you have Ruby (3.3.8) and postgresql installed. 
+
+1. Clone the repository...
+2. Install dependencies (`bundle install`).
+3. Set up local DB:
+- Run `rake db:create`
+(this currently assumes a username of `postgres` and a blank password. Please update username and password if this command fails, i.e. in )
+- Run `rails db:migrate`
+- Run `rails db:seed`
+
+
+### Solution Design:
 Database Options: 
 1. Relational Database
 2. Document Database
@@ -62,7 +74,7 @@ We will first try the (3) approach.
 
 
 
-### Other considerations: 
+## Other considerations: 
 # Performance
 - if we (1) get a large number of users running these API routes
 If we were to actually create an application here, we would consider hosting this application in multiple web servers. We could add a load balancer to direct users to the right servers at scale.
@@ -75,6 +87,15 @@ I noticed the project didn't mention unit testing or integration testing. I plan
 How might we think about the users of this application? Can they be admins and buyers? User authentication is out of scope, but I wonder if it makes sense to code the part of the project that allows us to verify if a price of an inventory object can be updated...maybe checking for the presence of a token or anything like that? 
 
 
+
+
+### How I worked on this project 
+1. Ran rails new . --api --database=postgresql --skip-git to set up a rails app and manually updated ruby version/gems
+2. Focused on DB first. Used another rails helper to handle creating the migration file. Ran: 
+``` 
+rails generate model Inventory code:string:uniq:index name:string price:float description:text
+```
+3. 
 
 
 
