@@ -6,10 +6,17 @@ Before starting, please ensure you have Ruby (3.3.8) and postgresql installed.
 2. Install dependencies (`bundle install`).
 3. Set up local DB:
 - Run `rake db:create`
-(this currently assumes a username of `postgres` and a blank password. Please update username and password if this command fails, i.e. in )
+(this currently assumes a username of `postgres` and a blank password. Please update username and password if this command fails, i.e. in `.env`)
 - Run `rails db:migrate`
 - Run `rails db:seed`
 
+
+To run specs:
+1. Set up test DB:
+- Run `rails db:create RAILS_ENV=test`
+(this currently assumes a username of `postgres` and a blank password. Please update username and password if this command fails, i.e. in `.env`)
+- Run `rails db:migrate RAILS_ENV=test`
+2. Run `bundle exec rspec`
 
 ### Solution Design:
 Database Options: 
@@ -31,6 +38,9 @@ Users
 - cart, text[] # an array of items that user has in their cart
 - history, text[] # array of items that user has purchased 
 
+Discounts
+- inventory_code, text, not-null # this will be the way to join data between this table and Inventory
+- 
 
 ## API Design:
 
@@ -51,7 +61,7 @@ discount_information: (for example, 30% off when buying 3 or more)
 # Question 2
 Implement an API endpoint that allows updating the price of a given product.
 
-- POST or PATCH
+- POST or PATCH or PUT ? 
 Parameters: text (Code of product), float (new price of product)
 Status: 400 if bad param
 Status: 200, returns code of product with new price (optionally maybe old price, as well?)
@@ -89,13 +99,26 @@ How might we think about the users of this application? Can they be admins and b
 
 
 
-### How I worked on this project 
-1. Ran rails new . --api --database=postgresql --skip-git to set up a rails app and manually updated ruby version/gems
+### How I worked on this project - Journal
+1. Ran `rails new . --api --database=postgresql --skip-git` to set up a rails app and manually updated ruby version/gems
 2. Focused on DB first. Used another rails helper to handle creating the migration file. Ran: 
 ``` 
 rails generate model Inventory code:string:uniq:index name:string price:float description:text
 ```
-3. 
+Tested initializing a rails db and migrating and seeding to actually create and populate this table. In my company, we automatically generate migration files using rails or rake, but we edit the migration files directly to decide whether or not we should have an index, etc. 
+3. Focused on adding read/write methods to model(s). At this point, i only have Inventory as my table, but considering whether or not i should create a Discount table instead of the yaml/json approach i considered earlier. I can then create an API that allows user to update discount logic.
+4. Next, I created a controller using `rails generate controller Inventories` ...I thought about what the API endpoint should look like...thinking about 
+- /inventory/all              (put this in a namespace)
+- /inventories                (this as a url doesnt make sense to me)
+- /inventory/id/update?price=[]
+-/inventory/total?items=[]
+
+I decided to follow the Rails Model-View-Controller here and go with inventory/ as the base for the APIs...I think this is clear and matches conventions. Cons may be: harder to extend if we want multiple controllers within an "inventory" namespace. 
+
+5. Next, I had a huge problem testing these APIs that took up more time i'm a bit embarrased to admit. I never found a root cause but it looks like running my test suite i.e. `bundle exec rspec` rewrote my RAILS_ENV environment variable to `test` instead of `development`. This never happens when i develop using docker or in macos, and this was my first time developing locally on windows. Re-updating RAILS_ENV fixed this easily, but an interesting issue, and points to how nice it is to have docker or a VM handle all this stuff.
+
+6. 
+
 
 
 
