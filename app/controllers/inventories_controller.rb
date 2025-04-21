@@ -2,17 +2,20 @@ class InventoriesController < ApplicationController
 
 
 	def index
-		inventories = Inventory.all
-		inventories = Inventory.all.map do |item|
-      {
-        name: item.name,
-        price: format("$%.2f", item.price)
-      }
-    end
+		all_items = Inventory.all.map do |item|
+			discount = Discount.find_by_code(item_code: item.code)
+
+			item_data = {
+		        name: item.name,
+		        price: format("$%.2f", item.price)
+		        discount_information: discount&.to_s
+		    }
+
+		    end
 
 	    response_data = {
 	      message: "Welcome to Reedsy Merchandise! Here are the items for sale:",
-	      items: inventories
+	      items: all_items
 	    }
 
 	    render json: response_data

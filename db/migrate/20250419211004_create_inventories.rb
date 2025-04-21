@@ -1,9 +1,9 @@
 class CreateInventories < ActiveRecord::Migration[7.2]
   def change
     create_table :inventories do |t|
-      t.string :code
+      t.string :code, :null => false
       t.string :name
-      t.float :price
+      t.float :price, :null => false
       t.text :description
 
       t.timestamps

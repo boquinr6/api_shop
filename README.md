@@ -73,6 +73,10 @@ Implement an API endpoint that allows one to check the price of a given list of 
 Parameters: text[], list of items
 Status: 400 if bad param
 Status: 200, returns float price
+- POST
+put tally of items in JSON body - this seems unusual for an API call that isnt going to actually update the data model...but given that we don't have a limit for the items, this seems potentially better than a list of items.
+
+
 
 ## Discount design options: 
 (1) having the discount logic live as a column in the Inventory table in the database (we'd have to read and interpret the discount data from the db, and this wouldn't be very flexible to update)
@@ -117,8 +121,83 @@ I decided to follow the Rails Model-View-Controller here and go with inventory/ 
 
 5. Next, I had a huge problem testing these APIs that took up more time i'm a bit embarrased to admit. I never found a root cause but it looks like running my test suite i.e. `bundle exec rspec` rewrote my RAILS_ENV environment variable to `test` instead of `development`. This never happens when i develop using docker or in macos, and this was my first time developing locally on windows. Re-updating RAILS_ENV fixed this easily, but an interesting issue, and points to how nice it is to have docker or a VM handle all this stuff.
 
-6. 
+6. Next, I started thinking more about the discount design. There are 2 distinct discount types:
+- a discount for buying X or more of the same item
+- a volume discount that changes every 10 items
+There are 2 ways we can design a table/model to store this discount information:
+Method #1 - hardcode every discount as a row in DiscountTable
+DiscountTable:
+- id
+- item_code, string, this is how we join discount info to item
+- minimmum_item_count, integer, the min number to activate the discount
+- maximum_item_count, integer, the max number to activate the discount, if nil, then anything greater than min item count activates the discount
+- discount_percentage, float, the discount to apply
 
+Example usage: 
+```
+Discount.create!(
+  item_code: 'TSHIRT',
+  discount_type: 'percentage',
+  minimmum_item_count: 3,
+  discount_percentage: 0.30
+)
+
+# For MUG volume discounts, we'll need multiple records
+Discount.create!(
+  item_code: 'MUG',
+  discount_type: 'percentage', # Treating these as percentage discounts based on quantity
+  minimmum_item_count: 10,
+  maximum_item_count: 19,
+  discount_percentage: 0.02
+)
+
+Discount.create!(
+  item_code: 'MUG',
+  discount_type: 'percentage',
+  minimmum_item_count: 20,
+  maximum_item_count: 29,
+  discount_percentage: 0.04
+)
+...
+# and so on
+```
+Cons: this would not be DRY and necessitate requiring a record in the DiscountTable for EVERY discount, even though there is a pattern for incrementing the discount by 2% every 10 items.
+
+Method #2 - have two types of discounts in DiscountTable
+DiscountTable:
+- id
+- item_code, string, this is how we join discount info to item
+- discount_type, string, either percentage or volume
+- minimum_item_count, integer, the min number to activate the discount
+- discount_percentage, float, the discount to apply
+- increment_step, integer, the amount of items that where the next tier of discount can be applied
+- discount_per_step, integer, 
+- maximum_num_items_for_discount, integer, if num of items is this or more, discount will be maximally incremented discount
+
+Example Usage:
+```
+Discount.create!(
+  item_code: 'TSHIRT',
+  discount_type: 'percentage',
+  min_quantity: 3,
+  discount_percentage: 30
+)
+
+# MUG incremental volume discount
+Discount.create!(
+  item_code: 'MUG',
+  discount_type: 'incremental_volume',
+  increment_step: 10,
+  discount_per_step: 0.02,
+  maximum_num_items_for_discount: 150
+)
+```
+
+Cons: a bit harder to code in that we have to fork the logic between percentage discounts and incremental_volume discounts. Also, for incremental volume discounts, we can only update the increment_step and the discount_per_step...if we wanted to update the discounts more precisely (let's say we wanted to give 5% off for buying between 20 and 30 items but kep everything else the same incrementing by 2%...we could not do this with Method #2)
+
+ `rails generate model Discount item_code:string:index discount_type:string min_quantity:integer discount_percentage:float increment_step:integer discount_per_step:float maximum_num_items_for_discount:integer`
+
+ In the end, I went with Method#2 for the discount logic!
 
 
 

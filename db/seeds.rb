@@ -18,3 +18,19 @@ initial_inventory.each do |attrs|
 	Inventory.create(attrs)
 end
 
+# T-shirt discount
+Discount.create!(
+  item_code: 'TSHIRT',
+  discount_type: 'percentage',
+  min_quantity: 3,
+  discount_percentage: 30
+)
+
+# MUG incremental volume discount
+Discount.create!(
+  item_code: 'MUG',
+  discount_type: 'incremental_volume',
+  increment_step: 10,
+  discount_per_step: 2,
+  max_percentage_discount: 30
+)
