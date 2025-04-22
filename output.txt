@@ -1,0 +1,1 @@
+{"message":"Welcome to Reedsy Merchandise! Here are the items for sale:","items":[{"name":"Reedsy T-shirt","price":"$15.00","discount_information":"30.0% off if you buy 3 or more"},{"name":"Reedsy Mug","price":"$6.00","discount_information":"Increases by 2.0% for every 10 items bought. Caps at 30.0"},{"name":"Reedsy Hoodie","price":"$20.00","discount_information":null}]}

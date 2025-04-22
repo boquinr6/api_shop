@@ -80,6 +80,8 @@ class InventoriesController < ApplicationController
 			item_code = item_code.strip.upcase
 			item_counts[item_code] = quantity
 		end
+
+		item_counts
 	end
 
 	def validate_list_of_items
@@ -87,6 +89,7 @@ class InventoriesController < ApplicationController
 
 		raise ArgumentError.new("must be in pairs of Integer,item_code separated by comma e.g. 3,MUG, 2,TSHIRT...") if params["items"].split(",").size % 2 != 0
 
+		item_counts = {}
 		begin
 			params["items"].split(",").each_slice(2) do |num_items, item_code|
 			quantity = Integer(num_items.strip)

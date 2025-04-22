@@ -1,24 +1,99 @@
 ### Instructions
 
-Before starting, please ensure you have Ruby (3.3.8) and postgresql installed. 
+Before starting, please ensure you have Ruby (3.3.8) and postgresql (17.4) installed. This was developed and tested on a Windows machine so some commands might be different!
 
-1. Clone the repository...
+1. Clone the repository and cd into it...
 2. Install dependencies (`bundle install`).
 3. Set up local DB:
 - Run `rake db:create`
 (this currently assumes a username of `postgres` and a blank password. Please update username and password if this command fails, i.e. in `.env`)
+```
+PG_PASSWORD=your_password_here
+```
 - Run `rails db:migrate`
 - Run `rails db:seed`
 
+4. Run `rails server` or `rails server -e development`
+5. Open a second terminal and cd into it.
+6. In your second terminal, run the curl commands from the API Design section below to test the application:
+`curl -v 'http://localhost:3000/inventory/all' -o output.txt`
+I actually was having trouble using curl here for a PUT request. after some research, it may be a windows powershell issue. The equivalent command is: 
+`Invoke-WebRequest -Uri 'http://localhost:3000/inventory/3/update_price?price=1.23' -Method Put`
+The equivalent curl command would be: 
+`curl -X PUT 'http://localhost:3000/inventory/3/update_price?price=1.23'` 
+`curl 'http://localhost:3000/inventory/total?items=1,MUG,3,TSHIRT'`
+7. Please read more about the API Design below.
+8. To run test suite, see instructions below. 
+9. I created a section in this readme called "How I worked on this project - Journal" - this is optional to read, but meant to be read to understand how i thought about this problem and the issues i ran into along the way. I'm happy to discuss them live and discuss what the biggest decisions i had to make and where i had the most successes and frustrations! Thank you for your time in reading through the application, and thank you for the opportunity. 
 
-To run specs:
+## API Design
+
+# Question 1
+Implement an API endpoint that allows listing the existing items in the store, as well as their attributes.
+
+- GET 
+Status: 200, returns array of hashes
+Route: 
+  `get "inventory/all" => "inventories#index"`
+This was just a simple GET...decided to only show the name, price, and discount information for each item.
+
+To test:
+`curl -v 'http://localhost:3000/inventory/all' -o output.txt`
+
+Example return:
+```
+{"message":"Welcome to Reedsy Merchandise! Here are the items for sale:","items":[{"name":"Reedsy T-shirt","price":"$15.00","discount_information":"30.0% off if you buy 3 or more"},{"name":"Reedsy Mug","price":"$6.00","discount_information":"Increases by 2.0% for every 10 items bought. Caps at 30.0"},{"name":"Reedsy Hoodie","price":"$20.00","discount_information":null}]}
+```
+
+# Question 2
+Implement an API endpoint that allows updating the price of a given product.
+
+- PUT 
+Parameters: integer (unique ID of product), float (new price of product)
+Status: 400 if bad param
+Status: 200, returns code of product with new price (optionally maybe old price, as well?)
+
+To test: 
+I actually was having trouble using curl here for a PUT request. after some research, it may be a windows powershell issue. The equivalent command is: 
+`Invoke-WebRequest -Uri 'http://localhost:3000/inventory/3/update_price?price=1.23' -Method Put`
+The equivalent curl command would be: 
+`curl -X PUT 'http://localhost:3000/inventory/3/update_price?price=1.23'` 
+But I haven't tested the curl command! 
+To test that this was running correctly, I reran `curl -v 'http://localhost:3000/inventory/all'` and verified that item 3 updated its price correctly!
+
+# Question 3
+Implement an API endpoint that allows one to check the price of a given list of items.
+
+- GET
+Parameters: text[], list of items
+Status: 400 if bad param
+Status: 200, returns float price
+- I originally considered a POST request ; put tally of items in JSON body - this seems unusual for an API call that isnt going to actually update the data model...but given that we don't have a limit for the items, this seems potentially better than a list of items.
+
+I decided to go with the GET request given the problem specifically states a list of items, but I did restrict the input to be a specific type of list. Here's a sample curl to explain:
+
+`curl 'http://localhost:3000/inventory/total?items=1,MUG,3,TSHIRT'`
+We restrict the list of items to be Integer,item_code pairs. If we don't get an input in this format, we return a 400 invalid client-side parameter. 
+
+```
+{"message":"Here is the total price (including discounts) for {\"MUG\"=\u003e1,
+                    \"TSHIRT\"=\u003e3}:","total_price":"$37.50"}
+```
+
+# Question 4: Discounts
+- Please see `discount.rb` model and InventoriesController#total to see how discount is applied. 
+
+
+
+## To run specs:
 1. Set up test DB:
 - Run `rails db:create RAILS_ENV=test`
 (this currently assumes a username of `postgres` and a blank password. Please update username and password if this command fails, i.e. in `.env`)
 - Run `rails db:migrate RAILS_ENV=test`
 2. Run `bundle exec rspec`
+3. Please make sure you switch back your RAILS_ENV back to `development` when you're done testing! 
 
-### Solution Design:
+### Solution Design (more of a notes document):
 Database Options: 
 1. Relational Database
 2. Document Database
@@ -30,6 +105,14 @@ Inventory
 - Price, float, not-null
 - Description, text, nullable
 
+Discount
+- item_code, text, not-null
+- discount_type, text, not-null, percentage or incremental_volume
+- minimum_quantity, integer, nullable
+- discount_percentage, float, nullable
+- increment_step, integer, nullable
+- discount_per_step, float, nullable
+- max_percentage_discount, float, nullable
 
 # Unnecessary tables for this project but could be useful
 Users
@@ -38,53 +121,17 @@ Users
 - cart, text[] # an array of items that user has in their cart
 - history, text[] # array of items that user has purchased 
 
-Discounts
-- inventory_code, text, not-null # this will be the way to join data between this table and Inventory
-- 
-
-## API Design:
-
-# Question 1
-Implement an API endpoint that allows listing the existing items in the store, as well as their attributes.
-
-- GET
-Status: 200, returns array of hashes
-Example return:
-[
-{
-code: t shirt
-name: Reedsy t-shirt
-price: 
-discount_information: (for example, 30% off when buying 3 or more)
-}, ....]
-
-# Question 2
-Implement an API endpoint that allows updating the price of a given product.
-
-- POST or PATCH or PUT ? 
-Parameters: text (Code of product), float (new price of product)
-Status: 400 if bad param
-Status: 200, returns code of product with new price (optionally maybe old price, as well?)
-
-# Question 3
-Implement an API endpoint that allows one to check the price of a given list of items.
-
-- GET
-Parameters: text[], list of items
-Status: 400 if bad param
-Status: 200, returns float price
-- POST
-put tally of items in JSON body - this seems unusual for an API call that isnt going to actually update the data model...but given that we don't have a limit for the items, this seems potentially better than a list of items.
 
 
 
-## Discount design options: 
+## Discount design options (historical): 
 (1) having the discount logic live as a column in the Inventory table in the database (we'd have to read and interpret the discount data from the db, and this wouldn't be very flexible to update)
 (2) having the discount logic live directly in the controller/model. This would be just a bunch of conditionals. Easy and straightforward to calculate but also might not be super flexible.
 (3) Having the discount logic live in a json or yaml configuration. I like this option the most I think - we would load in each item's discount logic and calculate...we'd need to make some sort of json interpreter so it could be harder to code than (2), but it would be much more flexible to update the discount logic.
 (4) Maybe making some sort of DiscountCalculator class that handles all the conditional logic - this would be an extension of 2, but it would be more of a service class to the controller. For this project, this might be too complicated. 
 
-We will first try the (3) approach. 
+We will first try the (3) approach.
+Edit: We ended up going with none of these, but maybe a variation of 3! After trying out (3), I realized it would actually be much easier to host this logic in its own table. So I created a Discount Model that calculates the total price of a given item and its quantity. 
 
 
 
@@ -94,10 +141,11 @@ We will first try the (3) approach.
 If we were to actually create an application here, we would consider hosting this application in multiple web servers. We could add a load balancer to direct users to the right servers at scale.
 - (2) get a query from a user asking what the total price is of a large number of items
 Our APIs will scale in terms of performance with regard to size of the query from users. i.e. if the user asks for the price of n items, the time performance will be O(n). We will only need to read the inventory table a maximum of m times, where m is the size of the table. We can cache the results of reading the table, which will take O(m) memory but will save us table lookup time. 
-
-
+Edit: thinking about this more, we would only need to read the Inventory table 1 time, cache the results, and it should take O(1) time to do cache lookups. 
 
 I noticed the project didn't mention unit testing or integration testing. I plan to create rspec tests for the controller and any specific modules. Should I plan to create any kind of integration tests? For this, it might be easier to write out a "plan" for integration testing. 
+Edit: I ended up creating tests here for the models. I believe that almost all code should be thoroughly unit tested and pass a test suite before merging. If I had more time, I would've probably created a bit more here. 
+
 How might we think about the users of this application? Can they be admins and buyers? User authentication is out of scope, but I wonder if it makes sense to code the part of the project that allows us to verify if a price of an inventory object can be updated...maybe checking for the presence of a token or anything like that? 
 
 
@@ -198,6 +246,40 @@ Cons: a bit harder to code in that we have to fork the logic between percentage 
  `rails generate model Discount item_code:string:index discount_type:string min_quantity:integer discount_percentage:float increment_step:integer discount_per_step:float maximum_num_items_for_discount:integer`
 
  In the end, I went with Method#2 for the discount logic!
+
+ 7. Next, I took a look at how i wanted to construct the API endpoint for getting a total price from a list of items. Originally, I was going to use a simple GET request with the param being a list of items e.g. /inventory/total?list=MUG,MUG,MUG,HOODIE,HOODIE --> this represents a request for the total price of 3 mugs and 2 hoodies. 
+ But then I realized we don't have a limit here, and our URL length could get super unwieldy. So I started to think about what passing in a JSON tally of items and quantities e.g. 
+ {
+  "items": [
+  {"code": "MUG", "quantity": "3"}
+  ]
+ }
+
+ The latter seemed more like the correct solution, but even passing in a JSON blob like this to a GET request seemed like it would make the URL way too long and unwieldy. Yet another alternative i considered was making a POST request with this JSON in the body of the POST request. One con of a POST request is that GET requests are idempotent, and POST requests are generally used to change or update the data model. 
+
+ For simplicity, I decided to do a GET request with a list of items and their quantity, since it more closely matched the problem statement...but in future iterations, i'd imagine industry-accepted patterns do this in a POST method or are calculating a running total in-memory.
+
+ 8. One other bug that was hard to detect was my use of 
+ `params["items"].split(",").each_slice(2).to_h` to convert my list of items to a tally of item code to num_items `{HOODIE: 1, TSHIRT: 1}`. I didn't realize that by doing this, i was overriding an item if there was one of the same quantity if the url looks like this: 
+ `curl 'http://localhost:3000/inventory/total?items=1,MUG,3,TSHIRT,1,HOODIE'`
+ To solve this, I updated my `parse_list_of_items` helper method to instead construct a hash instead of trying to use `to_h` directly:
+ ```
+    item_counts = {}
+
+    # convert list of quantities and item codes to a hash of item => quantity
+    params["items"].split(",").each_slice(2) do |num_items, item_code|
+      quantity = Integer(num_items.strip)
+      item_code = item_code.strip.upcase
+      item_counts[item_code] = quantity
+    end
+```
+
+9. Finally, I worked on the last piece of the problem prompt...allowing the user to update the price of an item via API. Initially, it made sense to me to have a URL like 
+- /inventory/update_price?price=1.23&item=mug
+or 
+- /inventory/mug/update_price?price=1.23
+But as i was researching this and remembered what we do at my current company, I know that it's best practice here to use the ActiveRecord numerical ID...it is immutable, has performant lookups, and is guaranteed to be unique compared to using item_code. We could argue that using item_code in the URL is more user-friendly, but an action like updating the price is more likely to be used by someone who knows the IDs of the records. So in the end, I went with this as the url:
+- /inventory/:id/update_price?price=1.23
 
 
 

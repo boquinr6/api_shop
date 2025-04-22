@@ -28,10 +28,10 @@ class Discount < ApplicationRecord
 		if discount_type == "percentage"
 			"#{discount_percentage}% off if you buy #{min_quantity} or more"
 		elsif discount_type == "incremental_volume"
-			"Increases by #{discount_per_step}% for every #{increment_step} items bought. Caps at #{max_percentage_discount}"
+			"Incrementing #{discount_per_step}% discount for every #{increment_step} items bought. Caps at #{max_percentage_discount}%"
+		else
+			"No discount available"
 		end
-
-		"No discount available"
 	end
 
 	# @param price [Float]
