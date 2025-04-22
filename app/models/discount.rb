@@ -21,7 +21,7 @@ class Discount < ApplicationRecord
 	validates :item_code, presence: true
 
 	def self.find_by_code(item_code:)
-		Discount.where(item_code:).first
+		Discount.where(item_code: item_code).first
 	end
 
 	def to_s

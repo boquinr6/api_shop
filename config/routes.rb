@@ -9,5 +9,7 @@ Rails.application.routes.draw do
   # root "posts#index"
 
   get "inventory/all" => "inventories#index"
+  get "inventory/total" => "inventories#total"
+  put "inventory/:id/update_price", to: "inventories#update_price"
 
 end
