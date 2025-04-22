@@ -10,6 +10,6 @@ Rails.application.routes.draw do
 
   get "inventory/all" => "inventories#index"
   get "inventory/total" => "inventories#total"
-  put "inventory/:id/update_price", to: "inventories#update_price"
+  put "inventory/:code/update_price", to: "inventories#update_price"
 
 end

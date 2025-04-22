@@ -24,7 +24,6 @@ class Inventory < ApplicationRecord
 	def update_price(new_price)
 		begin
 			update(price: Float(new_price))
-
 		rescue 
 			raise ArgumentError, "Price '#{new_price}' must be numerical"	 
 		end

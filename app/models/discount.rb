@@ -40,6 +40,7 @@ class Discount < ApplicationRecord
 	# @return total_price [Float] Total price of items with discount applied
 	def discounted_total_for_items(price:, item_code:, num_items:)
 		subtotal = num_items * price
+		# return early if incorrect item code - we actually may not need this because if we're here, then that means we must have initialized a Discount object with the item code we want. 
 		return subtotal if self.item_code != item_code
 
 	    discount_to_apply = calculate_discount(num_items)
@@ -56,7 +57,9 @@ class Discount < ApplicationRecord
 			return discount_percentage/100.0
 
 		elsif discount_type == "incremental_volume"
-			# all we need to do is get the highest divisor and multiply by discount
+			# all we need to do is get the highest divisor and multiply by discount. 
+			# since num_items and increment_step are guaranteed to be integers, 
+			# we can do the division step and get an integer.
 			tier_percentage = (num_items / increment_step) * discount_per_step
 
 			percentage = [tier_percentage, max_percentage_discount].min
