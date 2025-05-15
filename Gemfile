@@ -1,7 +1,7 @@
 source 'https://rubygems.org'
 
 ruby '3.3.8' 
-gem 'rails', '~> 7.1' # Or the latest stable Rails version if you prefer
+gem 'rails', '~> 8.0' # Or the latest stable Rails version if you prefer
 gem 'pg'              # PostgreSQL adapter
 gem 'rspec-rails'     # For testing with RSpec
 gem 'byebug', platforms: [:mri, :mingw, :x64_mingw]
