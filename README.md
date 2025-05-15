@@ -19,7 +19,7 @@ Alternatively, you can alter `databse.yml` directly and hardocode username and p
 - Run `rails db:seed`
 
 4. Run `rails server` or `rails server -e development`. You're now ready to test the APIs!
-5. Open a second terminal and cd into it.
+5. Open a second terminal and cd into the repo.
 6. In your second terminal, run the curl commands from the API Design section below to test the application:
 API 1: `curl -v 'http://localhost:3000/inventory/all' -o output.txt`
 API 2: I actually was having trouble using curl here for a PUT request. after some research, it may be a windows powershell issue. The equivalent windows command is: 
