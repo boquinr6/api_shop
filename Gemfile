@@ -9,7 +9,7 @@ gem 'dotenv-rails'    # went with loading env vars from .env
 
 
 # Use Puma as the app server
-gem 'puma', '~> 6.0'
+gem 'puma', '~> 6.6'
 
 # Reduces boot times through caching; required for zeitwerk mode.
 gem 'bootsnap', require: false
