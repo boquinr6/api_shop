@@ -121,7 +121,7 @@ GEM
       timeout
     net-smtp (0.5.1)
       net-protocol
-    nio4r (2.7.4)
+    nio4r (2.7.5)
     nokogiri (1.18.7-x64-mingw-ucrt)
       racc (~> 1.4)
     nokogiri (1.18.7-x86_64-linux-gnu)
@@ -134,7 +134,7 @@ GEM
     psych (5.2.3)
       date
       stringio
-    puma (6.6.0)
+    puma (7.2.0)
       nio4r (~> 2.0)
     racc (1.8.1)
     rack (3.1.13)
@@ -220,7 +220,7 @@ DEPENDENCIES
   byebug
   dotenv-rails
   pg
-  puma (~> 6.0)
+  puma (~> 7.2)
   rails (~> 7.1)
   rspec-rails
   tzinfo-data
